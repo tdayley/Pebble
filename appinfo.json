@@ -1,0 +1,39 @@
+{
+    "appKeys": {
+        "KEY_CONDITIONS": 1,
+        "KEY_TEMPERATURE": 0
+    },
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "tim_dayley@yahoo.com",
+    "longName": "Simple Time, Date, and Weather",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "fonts/Providence.ttf",
+                "name": "FONT_PROVIDENCE_48",
+                "type": "font"
+            },
+            {
+                "file": "fonts/visitor1.ttf",
+                "name": "FONT_VISITOR_16",
+                "type": "font"
+            },
+            {
+                "file": "fonts/perfect-dos-vga.ttf",
+                "name": "FONT_PERFECT_DOS_48",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "2",
+    "shortName": "TimeDateWeather",
+    "uuid": "6f7993c4-f2ab-48b9-a725-464f55569bbe",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
