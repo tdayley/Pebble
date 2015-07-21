@@ -119,7 +119,7 @@ static void main_window_load(Window *window) {
   //Layer *window_layer = window_get_root_layer(window);
   //GRect window_bounds = layer_get_bounds(window_layer);
   
-  s_visitor_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_VISITOR_16));
+  s_visitor_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_VISITOR_50));
   s_providence_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PROVIDENCE_48));
   
   // Create day TextLayer
