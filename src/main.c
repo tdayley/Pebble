@@ -2,6 +2,7 @@
   
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITIONS 1
+#define KEY_UPDATE 2
 
 static Window *s_main_window;
 
@@ -63,10 +64,6 @@ static void tick_handler(struct tm *tick_frame, TimeUnits units_changed) {
 
     // Send the message!
     app_message_outbox_send();
-    
-    // Add update info text to TextLayer
-    strftime(info_text, sizeof(info_text), "Updated:\n%I:%M", tick_frame);
-    text_layer_set_text(s_info_layer, info_text);
   }
 }
 
@@ -75,6 +72,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   static char temperature_buffer[8];
   static char conditions_buffer[32];
   static char weather_layer_buffer[32];
+  static char update_info_buffer[32];
   
   // Read first item
   Tuple *t = dict_read_first(iterator);
@@ -89,6 +87,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_CONDITIONS:
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
+      case KEY_UPDATE:
+        snprintf(update_info_buffer, sizeof(update_info_buffer), "%s", t->value->cstring);
+        break;
       default:
         APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
         break;
@@ -101,6 +102,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Assemble full string and display
   snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s", temperature_buffer);
   text_layer_set_text(s_weather_layer, weather_layer_buffer);
+    
+  // Add update info text to TextLayer
+  snprintf(info_text, sizeof(info_text), "Synced\n%s", update_info_buffer);
+  text_layer_set_text(s_info_layer, info_text);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -158,18 +163,18 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   
   // Create weather TextLayer
-  s_weather_layer = text_layer_create(GRect(5, 110, 75, 200));
+  s_weather_layer = text_layer_create(GRect(10, 110, 75, 200));
   text_layer_set_background_color(s_weather_layer, GColorWhite);
   text_layer_set_text_color(s_weather_layer, GColorBlack);
   text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
   text_layer_set_font(s_weather_layer, s_providence_font);
   
   // Create info TextLayer
-  s_info_layer = text_layer_create(GRect(75, 125, 70, 200));
+  s_info_layer = text_layer_create(GRect(75, 120, 70, 200));
   text_layer_set_background_color(s_info_layer, GColorWhite);
   text_layer_set_text_color(s_info_layer, GColorBlack);
   text_layer_set_text_alignment(s_info_layer, GTextAlignmentCenter);
-  text_layer_set_font(s_info_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_font(s_info_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));

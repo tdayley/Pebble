@@ -29,22 +29,27 @@ function locationSuccess(pos) {
       var conditions = json.weather[0].description;
       console.log('Condition are ' + conditions);
       
-          // Assemble dictionary using our keys
-var dictionary = {
-  'KEY_TEMPERATURE': temperature,
-  'KEY_CONDITIONS': conditions
-};
+      var currentdate = new Date(); 
+      var n = currentdate.getHours() + ":" + currentdate.getMinutes();
+      console.log("Time: " + n);
+      
+      // Assemble dictionary using our keys
+      var dictionary = {
+        'KEY_TEMPERATURE': temperature,
+        'KEY_CONDITIONS': conditions,
+        'KEY_UPDATE': n
+      };
     
-    // Send to Pebble
-Pebble.sendAppMessage(dictionary,
-  function(e) {
-    console.log('Weather info sent to Pebble successfully!');
-  },
-  function(e) {
-    console.log('Error sending weather info to Pebble!');
-  }
-);
-    });
+      // Send to Pebble
+      Pebble.sendAppMessage(dictionary,
+        function(e) {
+          console.log('Weather info sent to Pebble successfully!');
+        },
+        function(e) {
+          console.log('Error sending weather info to Pebble!');
+        }
+      );
+  });
 }
 
 function locationError(err) {
