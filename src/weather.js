@@ -30,7 +30,7 @@ function locationSuccess(pos) {
       console.log('Condition are ' + conditions);
       
       var currentdate = new Date(); 
-      var n = currentdate.getHours() + ":" + currentdate.getMinutes();
+      var n = currentdate.getHours() + ":" + (currentdate.getMinutes()<10?'0':'') + currentdate.getMinutes();
       console.log("Time: " + n);
       
       // Assemble dictionary using our keys
