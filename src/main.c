@@ -15,6 +15,7 @@ static TextLayer *s_gap_layer_three;
 static TextLayer *s_gap_layer_four;
 static TextLayer *s_weather_layer;
 static TextLayer *s_info_layer;
+static TextLayer *s_battery_layer;
 
 static GFont s_providence_font;
 static GFont s_visitor_font;
@@ -23,6 +24,18 @@ char day_text[32];
 char date_text[32];
 char info_text[32];
 
+
+static void battery_handler(BatteryChargeState charge_state) {
+  static char s_battery_buffer[16];
+
+  if (charge_state.is_charging) {
+    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "~     ");
+  } else {
+    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%     ", charge_state.charge_percent);
+  }
+  
+  text_layer_set_text(s_battery_layer, s_battery_buffer);
+}
 
 static void update_time() {
   // Get a tm structure
@@ -65,6 +78,8 @@ static void tick_handler(struct tm *tick_frame, TimeUnits units_changed) {
     // Send the message!
     app_message_outbox_send();
   }
+  
+  battery_handler(battery_state_service_peek());
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -128,11 +143,18 @@ static void main_window_load(Window *window) {
   s_providence_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PROVIDENCE_48));
   
   // Create day TextLayer
-  s_day_layer = text_layer_create(GRect(0, 0, 144, 22));
+  s_day_layer = text_layer_create(GRect(0, 0, 92, 22));
   text_layer_set_background_color(s_day_layer, GColorBlack);
   text_layer_set_text_color(s_day_layer, GColorWhite);
   text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
   text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  
+  // Create battery TextLayer
+  s_battery_layer = text_layer_create(GRect(92, 0, 52, 22));
+  text_layer_set_background_color(s_battery_layer, GColorBlack);
+  text_layer_set_text_color(s_battery_layer, GColorWhite);
+  text_layer_set_text_alignment(s_battery_layer, GTextAlignmentRight);
+  text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   
   // Create right gap TextLayer
   s_gap_layer_one = text_layer_create(GRect(0, 22, 18, 2));
@@ -178,6 +200,7 @@ static void main_window_load(Window *window) {
   
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_one));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_two));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
@@ -198,10 +221,15 @@ static void main_window_unload(Window *window) {
   text_layer_destroy(s_day_layer);
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_weather_layer);
+  text_layer_destroy(s_battery_layer);
   
   // Unload GFont
   fonts_unload_custom_font(s_providence_font);
   fonts_unload_custom_font(s_visitor_font);
+  
+  // Unsubscribe from services
+  tick_timer_service_unsubscribe();
+  battery_state_service_unsubscribe();
 }
 
 static void init() {
@@ -210,6 +238,8 @@ static void init() {
   
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  // Subscribe to the Battery State Service
+  battery_state_service_subscribe(battery_handler);
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -231,6 +261,7 @@ static void init() {
   
   // Open AppMessage
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  
 }
 
 static void deinit() {
