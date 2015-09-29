@@ -31,10 +31,10 @@ function locationSuccess(pos) {
       
       // Conditions
       // Conditions for openweathermap
-      var conditions = json.weather[1].main;
+      //var conditions = json.weather[1].main;
       // Conditions for wunderground
       //var conditions = json.current_observation.weather;
-      console.log('Condition is ' + conditions);
+      //console.log('Condition is ' + conditions);
       
       var currentdate = new Date(); 
       var n = currentdate.getHours() + ":" + ((currentdate.getMinutes()<10) ? "0" + currentdate.getMinutes() : currentdate.getMinutes() );
@@ -43,7 +43,7 @@ function locationSuccess(pos) {
       // Assemble dictionary using our keys
       var dictionary = {
         'KEY_TEMPERATURE': temperature,
-        'KEY_CONDITIONS': conditions,
+        //'KEY_CONDITIONS': conditions,
         'KEY_UPDATE': n
       };
     
