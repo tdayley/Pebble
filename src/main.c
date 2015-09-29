@@ -2,21 +2,40 @@
   
 #define KEY_TEMPERATURE 0
 #define KEY_CONDITIONS 1
+#define KEY_UPDATE 2
 
 static Window *s_main_window;
 
 static TextLayer *s_time_layer;
 static TextLayer *s_day_layer;
 static TextLayer *s_date_layer;
-static TextLayer *s_gap_layer;
+static TextLayer *s_gap_layer_one;
+static TextLayer *s_gap_layer_two;
+static TextLayer *s_gap_layer_three;
+static TextLayer *s_gap_layer_four;
 static TextLayer *s_weather_layer;
+static TextLayer *s_info_layer;
+static TextLayer *s_battery_layer;
 
 static GFont s_providence_font;
 static GFont s_visitor_font;
 
 char day_text[32];
 char date_text[32];
+char info_text[32];
 
+
+static void battery_handler(BatteryChargeState charge_state) {
+  static char s_battery_buffer[16];
+
+  if (charge_state.is_charging) {
+    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "~     ");
+  } else {
+    snprintf(s_battery_buffer, sizeof(s_battery_buffer), "%d%%     ", charge_state.charge_percent);
+  }
+  
+  text_layer_set_text(s_battery_layer, s_battery_buffer);
+}
 
 static void update_time() {
   // Get a tm structure
@@ -38,8 +57,8 @@ static void update_time() {
   // Display this time on the TextLayer
   text_layer_set_text(s_time_layer, buffer);
   
-  strftime(day_text, sizeof(day_text), " %A", tick_time);
-  strftime(date_text, sizeof(date_text), "%B %e ", tick_time);
+  strftime(day_text, sizeof(day_text), "      %A", tick_time);
+  strftime(date_text, sizeof(date_text), "%B %e     ", tick_time);
   text_layer_set_text(s_day_layer, day_text);
   text_layer_set_text(s_date_layer, date_text);
 }
@@ -48,7 +67,7 @@ static void tick_handler(struct tm *tick_frame, TimeUnits units_changed) {
   update_time();
   
   // Get weather update every 30 minutes
-  if(tick_frame->tm_min % 1 == 0) {
+  if(tick_frame->tm_min % 5 == 0) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -59,6 +78,8 @@ static void tick_handler(struct tm *tick_frame, TimeUnits units_changed) {
     // Send the message!
     app_message_outbox_send();
   }
+  
+  battery_handler(battery_state_service_peek());
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -66,6 +87,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   static char temperature_buffer[8];
   static char conditions_buffer[32];
   static char weather_layer_buffer[32];
+  static char update_info_buffer[32];
   
   // Read first item
   Tuple *t = dict_read_first(iterator);
@@ -80,6 +102,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case KEY_CONDITIONS:
         snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
         break;
+      case KEY_UPDATE:
+        snprintf(update_info_buffer, sizeof(update_info_buffer), "%s", t->value->cstring);
+        break;
       default:
         APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
         break;
@@ -92,6 +117,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   // Assemble full string and display
   snprintf(weather_layer_buffer, sizeof(weather_layer_buffer), "%s", temperature_buffer);
   text_layer_set_text(s_weather_layer, weather_layer_buffer);
+    
+  // Add update info text to TextLayer
+  snprintf(info_text, sizeof(info_text), "Synced\n%s", update_info_buffer);
+  text_layer_set_text(s_info_layer, info_text);
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -107,64 +136,100 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 }
 
 static void main_window_load(Window *window) {
-  Layer *window_layer = window_get_root_layer(window);
-  GRect window_bounds = layer_get_bounds(window_layer);
+  //Layer *window_layer = window_get_root_layer(window);
+  //GRect window_bounds = layer_get_bounds(window_layer);
   
-  s_visitor_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_VISITOR_16));
+  s_visitor_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_VISITOR_50));
   s_providence_font = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_PROVIDENCE_48));
   
+  // Create day TextLayer
+  s_day_layer = text_layer_create(GRect(0, 0, 92, 22));
+  text_layer_set_background_color(s_day_layer, GColorBlack);
+  text_layer_set_text_color(s_day_layer, GColorWhite);
+  text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
+  text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  
+  // Create battery TextLayer
+  s_battery_layer = text_layer_create(GRect(92, 0, 52, 22));
+  text_layer_set_background_color(s_battery_layer, GColorBlack);
+  text_layer_set_text_color(s_battery_layer, GColorWhite);
+  text_layer_set_text_alignment(s_battery_layer, GTextAlignmentRight);
+  text_layer_set_font(s_battery_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  
+  // Create right gap TextLayer
+  s_gap_layer_one = text_layer_create(GRect(0, 22, 18, 2));
+  text_layer_set_background_color(s_gap_layer_one, GColorBlack);
+  // Create left gap TextLayer
+  s_gap_layer_two = text_layer_create(GRect(130, 22, 30, 2));
+  text_layer_set_background_color(s_gap_layer_two, GColorBlack);
+  
   // Create time TextLayer
-  s_time_layer = text_layer_create(GRect(0, 0, 144, 60));
+  s_time_layer = text_layer_create(GRect(0, 24, 144, 60));
   text_layer_set_background_color(s_time_layer, GColorBlack);
   text_layer_set_text_color(s_time_layer, GColorWhite);
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
   text_layer_set_font(s_time_layer, s_providence_font);
   
-  // Create gap TextLayer
-  s_gap_layer = text_layer_create(GRect(0, 60, 144, 3));
-  text_layer_set_background_color(s_gap_layer, GColorWhite);
-  text_layer_set_text_alignment(s_gap_layer, GTextAlignmentCenter);
-  
-  // Create day TextLayer
-  s_day_layer = text_layer_create(GRect(0, 63, 144, 20));
-  text_layer_set_background_color(s_day_layer, GColorBlack);
-  text_layer_set_text_color(s_day_layer, GColorWhite);
-  text_layer_set_text_alignment(s_day_layer, GTextAlignmentLeft);
-  text_layer_set_font(s_day_layer, s_visitor_font);
+  // Create right gap TextLayer
+  s_gap_layer_three = text_layer_create(GRect(0, 84, 18, 2));
+  text_layer_set_background_color(s_gap_layer_three, GColorBlack);
+  // Create left gap TextLayer
+  s_gap_layer_four = text_layer_create(GRect(130, 84, 30, 2));
+  text_layer_set_background_color(s_gap_layer_four, GColorBlack);
   
   // Create date TextLayer
-  s_date_layer = text_layer_create(GRect(0, 80, 144, 20));
+  s_date_layer = text_layer_create(GRect(0, 86, 144, 24));
   text_layer_set_background_color(s_date_layer, GColorBlack);
   text_layer_set_text_color(s_date_layer, GColorWhite);
   text_layer_set_text_alignment(s_date_layer, GTextAlignmentRight);
-  text_layer_set_font(s_date_layer, s_visitor_font);
+  text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   
   // Create weather TextLayer
-  s_weather_layer = text_layer_create(GRect(0, 100, 144, 60));
+  s_weather_layer = text_layer_create(GRect(10, 110, 75, 200));
   text_layer_set_background_color(s_weather_layer, GColorWhite);
   text_layer_set_text_color(s_weather_layer, GColorBlack);
-  text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
+  text_layer_set_text_alignment(s_weather_layer, GTextAlignmentLeft);
   text_layer_set_font(s_weather_layer, s_providence_font);
   
+  // Create info TextLayer
+  s_info_layer = text_layer_create(GRect(75, 120, 70, 200));
+  text_layer_set_background_color(s_info_layer, GColorWhite);
+  text_layer_set_text_color(s_info_layer, GColorBlack);
+  text_layer_set_text_alignment(s_info_layer, GTextAlignmentCenter);
+  text_layer_set_font(s_info_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  
   // Add it as a child layer to the Window's root layer
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
-  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_battery_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_one));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_two));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_time_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_three));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_gap_layer_four));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_weather_layer));
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_info_layer));
 }
 
 static void main_window_unload(Window *window) {
   // Destroy TextLayer
   text_layer_destroy(s_time_layer);
-  text_layer_destroy(s_gap_layer);
+  text_layer_destroy(s_gap_layer_one);
+  text_layer_destroy(s_gap_layer_two);
+  text_layer_destroy(s_gap_layer_three);
+  text_layer_destroy(s_gap_layer_four);
   text_layer_destroy(s_day_layer);
   text_layer_destroy(s_date_layer);
   text_layer_destroy(s_weather_layer);
+  text_layer_destroy(s_battery_layer);
   
   // Unload GFont
   fonts_unload_custom_font(s_providence_font);
   fonts_unload_custom_font(s_visitor_font);
+  
+  // Unsubscribe from services
+  tick_timer_service_unsubscribe();
+  battery_state_service_unsubscribe();
 }
 
 static void init() {
@@ -173,6 +238,8 @@ static void init() {
   
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tick_handler);
+  // Subscribe to the Battery State Service
+  battery_state_service_subscribe(battery_handler);
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -194,6 +261,7 @@ static void init() {
   
   // Open AppMessage
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+  
 }
 
 static void deinit() {
