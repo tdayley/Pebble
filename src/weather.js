@@ -9,9 +9,10 @@ var xhrRequest = function (url, type, callback) {
 
 function locationSuccess(pos) {
   // Construct URL
-  var url = 'http://api.openweathermap.org/data/2.5/weather?lat=' + 
-      pos.coords.latitude + '&lon=' + pos.coords.longitude;
-  //var url = 'http://api.wunderground.com/api/a2303269eb7c01e2/conditions/q/' + pos.coords.latitude + ',' + pos.coords.longitude + '.json';
+  var openWeatherMapApiKey = ''; // Place key here
+  var url = 'http://api.openweathermap.org/data/2.5/weather?lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude + '&appid=' + openWeatherMapApiKey;
+  //var wundergroundApiKey = ''; // Place key here
+  //var url = 'http://api.wunderground.com/api/' + wundergroundApiKey + '/conditions/q/' + pos.coords.latitude + ',' + pos.coords.longitude + '.json';
   
   console.log('Lat = ' + pos.coords.latitude);
   console.log('Long = ' + pos.coords.longitude);
@@ -25,8 +26,10 @@ function locationSuccess(pos) {
       // Temperature in Kelvin requires adjustment
       // Temp for openweathermap
       var temperature = Math.round((json.main.temp - 273.15) * 1.8 + 32);
+      
       // Temp for wunderground
       //var temperature = json.current_observation.temp_f;
+      
       console.log('Temperature is ' + temperature);
       
       // Conditions
