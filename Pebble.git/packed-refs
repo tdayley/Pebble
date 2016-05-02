@@ -1,0 +1,6 @@
+# pack-refs with: peeled fully-peeled 
+aacdde468541faac21557cccb686dd0e438faba7 refs/heads/CloudPebbleWork
+192fc242162a1b06cede8b29a4b62ecb91c8e0e5 refs/heads/master
+aacdde468541faac21557cccb686dd0e438faba7 refs/remotes/origin/CloudPebbleWork
+c774cd385ab6e49f530d270f1b19093830bf444a refs/remotes/origin/HEAD
+c774cd385ab6e49f530d270f1b19093830bf444a refs/remotes/origin/master
