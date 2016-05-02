@@ -7,11 +7,17 @@
     "capabilities": [
         "location"
     ],
-    "companyName": "tim_dayley@yahoo.com",
+    "companyName": "Tim Dayley",
     "longName": "Simple Time, Date, and Weather",
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/PebbleMenuImage_v1_1.png",
+                "menuIcon": true,
+                "name": "MENU_IMAGE",
+                "type": "png"
+            },
             {
                 "file": "fonts/Providence.ttf",
                 "name": "FONT_PROVIDENCE_48",
@@ -33,7 +39,7 @@
     "shortName": "TimeDateWeather",
     "uuid": "6f7993c4-f2ab-48b9-a725-464f55569bbe",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "1.2",
     "watchapp": {
         "watchface": true
     }
