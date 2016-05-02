@@ -39,7 +39,11 @@
     "shortName": "TimeDateWeather",
     "uuid": "6f7993c4-f2ab-48b9-a725-464f55569bbe",
     "versionCode": 1,
+<<<<<<< HEAD
     "versionLabel": "1.2",
+=======
+    "versionLabel": "1.3",
+>>>>>>> refs/remotes/origin/CloudPebbleWork
     "watchapp": {
         "watchface": true
     }
